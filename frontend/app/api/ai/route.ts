@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1';
+const HUGGINGFACE_API_URL = 'https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1';
 
 interface Message {
   role: 'user' | 'assistant';
