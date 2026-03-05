@@ -20,7 +20,25 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost in development
+    if (origin.startsWith('http://localhost')) return callback(null, true);
+    
+    // Allow vercel.app domains
+    if (origin.includes('vercel.app')) return callback(null, true);
+    
+    // For production, check against allowed origins
+    const allowedOrigins = [env.FRONTEND_URL].filter(Boolean);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    
+    // If no FRONTEND_URL is set, allow all (development mode)
+    if (allowedOrigins.length === 0) return callback(null, true);
+    
+    return callback(new Error(`CORS policy violation: ${origin} is not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
