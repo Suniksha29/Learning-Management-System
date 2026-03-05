@@ -2,7 +2,8 @@
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
+  "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "@lms_api_url"
+    "NEXT_PUBLIC_API_URL": "https://learning-management-system-2-fjlm.onrender.com/api"
   }
 }

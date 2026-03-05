@@ -1,9 +1,0 @@
-{
-  "buildCommand": "cd frontend && next build",
-  "outputDirectory": "frontend/.next",
-  "framework": "nextjs",
-  "installCommand": "cd frontend && npm install",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://learning-management-system-2-fjlm.onrender.com/api"
-  }
-}
