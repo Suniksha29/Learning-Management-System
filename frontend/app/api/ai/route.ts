@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Use Hugging Face Router API with chat completions format
-const HUGGINGFACE_API_URL = 'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.1/chat/completions';
+// Use Hugging Face Inference API (standard endpoint)
+const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -39,11 +39,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format messages for chat completions API
-    const messages = [
-      {
-        role: 'system',
-        content: `You are a helpful, friendly AI tutor for a Learning Management System. You help students understand concepts, answer questions, and provide explanations in a clear, conversational way like ChatGPT.
+    // Format prompt for text generation
+    const formattedMessages = conversationHistory.map((msg: Message) => {
+      return `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`;
+    }).join('\n');
+    
+    const systemPrompt = `You are a helpful, friendly AI tutor for a Learning Management System. You help students understand concepts, answer questions, and provide explanations in a clear, conversational way like ChatGPT.
 
 Teaching style:
 - Be conversational and friendly
@@ -53,32 +54,27 @@ Teaching style:
 - Keep responses concise but informative (2-3 paragraphs max)
 - If you don't know something, admit it honestly
 - Focus on educational content
-- Ask follow-up questions to check understanding`
-      },
-      ...conversationHistory.map((msg: Message) => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      {
-        role: 'user',
-        content: prompt
-      }
-    ];
+- Ask follow-up questions to check understanding
+
+${formattedMessages ? `Previous conversation:\n${formattedMessages}\n\n` : ''}User: ${prompt}
+Assistant:`;
 
     console.log('Calling Hugging Face API...');
     console.log('API Key exists:', !!apiKey);
 
-    // Prepare request payload for Mistral-7B using chat format
+    // Prepare request payload for Mistral-7B (text generation format)
     const payload = {
-      model: 'mistralai/Mistral-7B-Instruct-v0.1',
-      messages: messages,
-      max_tokens: 200,
-      temperature: 0.7,
-      top_p: 0.95,
-      stream: false,
+      inputs: systemPrompt,
+      parameters: {
+        max_new_tokens: 200,
+        temperature: 0.7,
+        top_p: 0.95,
+        return_full_text: false,
+        do_sample: true,
+      },
     };
 
-    console.log('Payload model:', payload.model);
+    console.log('Payload inputs length:', systemPrompt.length);
 
     // Call Hugging Face Inference API
     const response = await fetch(HUGGINGFACE_API_URL, {
@@ -121,14 +117,16 @@ Teaching style:
     console.log('AI response received');
     console.log('Result:', JSON.stringify(result, null, 2));
 
-    // Extract the generated text from chat completions format
+    // Extract the generated text from text generation format
     let aiResponse = '';
     
-    if (result.choices && result.choices.length > 0) {
-      aiResponse = result.choices[0].message?.content || '';
+    if (Array.isArray(result) && result.length > 0) {
+      aiResponse = result[0].generated_text || '';
     } else if (result.generated_text) {
-      // Fallback to old format
       aiResponse = result.generated_text;
+    } else if (result.error) {
+      // HuggingFace error
+      throw new Error(result.error);
     } else {
       aiResponse = 'Sorry, I could not generate a response at this time.';
     }
