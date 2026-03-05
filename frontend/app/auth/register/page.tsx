@@ -41,7 +41,7 @@ export default function RegisterPage() {
 
     try {
       await register(email, password, name, username);
-      router.push('/');
+      router.push('/dashboard');
     } catch {
       // Error is handled by the store
     }

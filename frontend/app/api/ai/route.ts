@@ -38,23 +38,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format prompt for the AI tutor
-    const systemPrompt = `You are an AI tutor for a Learning Management System. Your role is to help students understand concepts related to their courses, provide explanations, answer questions about various topics, and guide them through their learning journey.
+    // Format prompt for the AI tutor - ChatGPT style
+    const formattedMessages = conversationHistory.map((msg: Message) => {
+      return `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`;
+    }).join('\n');
+    
+    const systemPrompt = `You are a helpful, friendly AI tutor for a Learning Management System. You help students understand concepts, answer questions, and provide explanations in a clear, conversational way like ChatGPT.
 
-Important guidelines:
+Teaching style:
+- Be conversational and friendly
 - Explain clearly and simply for beginners
-- Use examples when helpful
+- Use examples and analogies when helpful
 - Be encouraging and supportive
-- Keep responses concise but informative
+- Keep responses concise but informative (2-3 paragraphs max)
 - If you don't know something, admit it honestly
 - Focus on educational content
+- Ask follow-up questions to check understanding
 
-Conversation history:
-${conversationHistory.map((msg: Message) => `${msg.role}: ${msg.content}`).join('\n')}
-
-User question: ${prompt}
-
-AI Tutor:`;
+${formattedMessages ? `Previous conversation:\n${formattedMessages}\n\n` : ''}User: ${prompt}
+Assistant:`;
 
     // Prepare request payload for Mistral-7B
     const payload = {

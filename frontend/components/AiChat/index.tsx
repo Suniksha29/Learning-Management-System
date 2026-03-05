@@ -45,14 +45,28 @@ const AiChat: React.FC = () => {
         },
         body: JSON.stringify({
           prompt: userMessage.content,
-          conversationHistory: messages,
+          conversationHistory: messages.slice(-10), // Last 10 messages for context
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get AI response');
+        const errorMsg = data.error || 'Failed to get AI response';
+        
+        // Handle model warming up
+        if (data.retry) {
+          setError('AI is warming up. Please try again in a moment...');
+          // Keep the message and let user retry
+          setIsLoading(false);
+          return;
+        }
+        
+        throw new Error(errorMsg);
+      }
+
+      if (!data.reply || data.reply.trim() === '') {
+        throw new Error('Received empty response from AI');
       }
 
       const assistantMessage: Message = {
@@ -63,7 +77,8 @@ const AiChat: React.FC = () => {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       console.error('AI Chat Error:', err);
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(errorMessage);
       
       // Remove the last user message if there was an error
       setMessages(prev => prev.slice(0, -1));
