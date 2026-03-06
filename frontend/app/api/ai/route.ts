@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Use Hugging Face Inference API v2 (new router endpoint)
-const HUGGINGFACE_API_URL = 'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.1';
+// Use Hugging Face Inference API (direct model endpoint)
+const HUGGINGFACE_API_URL = 'https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1';
 
 interface Message {
   role: 'user' | 'assistant';
