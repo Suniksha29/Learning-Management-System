@@ -88,11 +88,20 @@ Assistant:`;
 
     console.log('Response status:', response.status);
     
+    // Log the full error for debugging
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      console.error('HuggingFace raw error response:', errorText);
+      
+      let errorData: Record<string, unknown> = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        console.error('Error is not JSON:', errorText);
+      }
       
       // Handle model loading/cold start
-      if (errorData.error && errorData.error.includes('loading')) {
+      if (errorData.error && typeof errorData.error === 'string' && errorData.error.includes('loading')) {
         console.log('Model is loading, please retry...');
         return NextResponse.json(
           { 
@@ -106,8 +115,9 @@ Assistant:`;
       console.error('Hugging Face API error:', errorData);
       return NextResponse.json(
         { 
-          error: errorData.error || 'Failed to get AI response',
-          details: response.statusText 
+          error: (errorData.error as string) || 'Failed to get AI response',
+          details: response.statusText,
+          raw: errorText
         },
         { status: response.status }
       );
